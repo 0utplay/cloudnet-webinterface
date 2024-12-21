@@ -31,36 +31,17 @@ export default function ServiceConsole({
       const cookieAddress = await getCookie('add')
       const address = cookieAddress.replace(/^(http:\/\/|https:\/\/)/, '')
 
-      const socket = io(`ws://${address}`, {
-        path: `/api/v3/service/${serviceName}/liveLog`,
-        query: {
-          ticket,
-        },
-        transports: ['websocket'],
-      })
-
-      socket.on('connect', () => {
-        console.log('Socket connected')
-      })
-
-      socket.on('message', (data) => {
+      const socket = new WebSocket(`ws://${address}/service/${serviceName}/liveLog?ticket=${ticket}`);
+      socket.onmessage = (event) => {
         const newEntry: ConsoleEntry = {
           command: 'Server',
-          output: data,
+          output: event.data,
         }
         setHistory((prev) => [...prev, newEntry])
-      })
-
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error)
-      })
-
-      socket.on('disconnect', () => {
-        console.log('Socket disconnected')
-      })
+      }
 
       return () => {
-        socket.disconnect()
+        socket.close()
       }
     }
 
